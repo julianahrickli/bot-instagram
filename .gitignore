@@ -1,0 +1,15 @@
+# Variáveis de ambiente — NUNCA versionar
+.env
+
+# Dependências
+node_modules/
+
+# Arquivos temporários de mídia
+tmp/
+
+# Logs de posts (contém dados sensíveis)
+logs/
+
+# Sistema
+.DS_Store
+Thumbs.db
