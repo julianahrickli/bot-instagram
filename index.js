@@ -173,17 +173,20 @@ async function baixarArquivoTelegram(fileId, extensao) {
   fs.writeFileSync(filePath, Buffer.from(response.data));
   console.log(`[DOWNLOAD] Arquivo salvo: ${filePath}`);
 
-  // 3. Faz upload para telegra.ph
+  // 3. Faz upload para 0x0.st (CDN público sem autenticação)
   const FormData = require('form-data');
   const form = new FormData();
-  form.append('file', fs.createReadStream(filePath), `media.${extensao}`);
+  form.append('file', fs.createReadStream(filePath), {
+    filename: `image.${extensao}`,
+    contentType: extensao === 'mp4' ? 'video/mp4' : 'image/jpeg',
+  });
 
-  const upload = await axios.post('https://telegra.ph/upload', form, {
+  const upload = await axios.post('https://0x0.st', form, {
     headers: form.getHeaders(),
     timeout: 30000,
   });
 
-  const publicUrl = `https://telegra.ph${upload.data[0].src}`;
+  const publicUrl = upload.data.trim();
   console.log(`[UPLOAD] URL pública: ${publicUrl}`);
 
   // 4. Remove arquivo local após upload
