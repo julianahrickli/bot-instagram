@@ -149,30 +149,32 @@ function podePosta() {
 // ---------------------------------------------------------------------------
 
 /**
- * Baixa um arquivo do Telegram para o diretório tmp/.
- * Retorna o caminho local do arquivo salvo.
+ * Obtém a URL pública do Telegram para um fileId.
+ * O Telegram serve arquivos publicamente via CDN — sem necessidade de baixar.
  */
-async function baixarArquivoTelegram(fileId, extensao) {
-  const filePath = `${TMP_DIR}/${fileId}.${extensao}`;
-
-  // Obtém a URL do arquivo no Telegram
+async function obterUrlTelegram(fileId) {
   const fileInfo = await bot.getFile(fileId);
   const url = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
-
-  // Baixa o arquivo
-  const response = await axios.get(url, { responseType: 'arraybuffer' });
-  fs.writeFileSync(filePath, Buffer.from(response.data));
-
-  console.log(`[DOWNLOAD] Arquivo salvo: ${filePath}`);
-  return filePath;
+  console.log(`[URL] URL Telegram obtida: ${url}`);
+  return url;
 }
 
 /**
- * Serve o arquivo local via URL pública.
- * Se PUBLIC_BASE_URL estiver configurado, retorna a URL do servidor.
- * Caso contrário, instrui a usar Google Drive / Dropbox.
+ * Mantido por compatibilidade — agora só obtém a URL sem baixar.
+ */
+async function baixarArquivoTelegram(fileId, extensao) {
+  const url = await obterUrlTelegram(fileId);
+  // Retorna a URL como "path" — será tratada como URL pública
+  return url;
+}
+
+/**
+ * Retorna a URL pública da mídia.
+ * Se o path já for uma URL (começa com http), retorna direto.
+ * Caso contrário, usa PUBLIC_BASE_URL como antes.
  */
 function gerarUrlPublica(localPath) {
+  if (localPath && localPath.startsWith('http')) return localPath;
   if (!PUBLIC_BASE_URL) return null;
   const filename = path.basename(localPath);
   return `${PUBLIC_BASE_URL}/media/${filename}`;
@@ -184,7 +186,8 @@ function gerarUrlPublica(localPath) {
 function limparTmp(mediaFiles) {
   for (const m of mediaFiles) {
     try {
-      if (m.filePath && fs.existsSync(m.filePath)) {
+      // Ignora URLs do Telegram — não há arquivo local para remover
+      if (m.filePath && !m.filePath.startsWith('http') && fs.existsSync(m.filePath)) {
         fs.unlinkSync(m.filePath);
         console.log(`[TMP] Removido: ${m.filePath}`);
       }
