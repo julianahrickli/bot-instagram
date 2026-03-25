@@ -97,13 +97,22 @@ function getSession(chatId) {
 }
 
 function resetSession(chatId) {
-  sessions[chatId] = {
-    step: 'idle',
-    mediaType: null,
-    mediaFiles: [],
-    caption: '',
-    scheduledTime: null,
-  };
+  const existing = sessions[chatId];
+  if (existing) {
+    existing.step = 'idle';
+    existing.mediaType = null;
+    existing.mediaFiles = [];
+    existing.caption = '';
+    existing.scheduledTime = null;
+  } else {
+    sessions[chatId] = {
+      step: 'idle',
+      mediaType: null,
+      mediaFiles: [],
+      caption: '',
+      scheduledTime: null,
+    };
+  }
 }
 
 // ---------------------------------------------------------------------------
