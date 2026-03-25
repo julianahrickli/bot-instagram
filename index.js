@@ -158,8 +158,8 @@ function podePosta() {
 // ---------------------------------------------------------------------------
 
 /**
- * Baixa arquivo do Telegram e salva localmente.
- * Retorna o caminho local do arquivo (será servido pelo servidor HTTP embutido).
+ * Baixa arquivo do Telegram e faz upload para telegra.ph (CDN gratuito aceito pela Meta).
+ * Retorna a URL pública permanente.
  */
 async function baixarArquivoTelegram(fileId, extensao) {
   const filePath = `${TMP_DIR}/${fileId}.${extensao}`;
@@ -173,7 +173,23 @@ async function baixarArquivoTelegram(fileId, extensao) {
   fs.writeFileSync(filePath, Buffer.from(response.data));
   console.log(`[DOWNLOAD] Arquivo salvo: ${filePath}`);
 
-  return filePath;
+  // 3. Faz upload para telegra.ph
+  const FormData = require('form-data');
+  const form = new FormData();
+  form.append('file', fs.createReadStream(filePath), `media.${extensao}`);
+
+  const upload = await axios.post('https://telegra.ph/upload', form, {
+    headers: form.getHeaders(),
+    timeout: 30000,
+  });
+
+  const publicUrl = `https://telegra.ph${upload.data[0].src}`;
+  console.log(`[UPLOAD] URL pública: ${publicUrl}`);
+
+  // 4. Remove arquivo local após upload
+  try { fs.unlinkSync(filePath); } catch(e) {}
+
+  return publicUrl;
 }
 
 /**
