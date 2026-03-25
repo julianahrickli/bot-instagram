@@ -173,20 +173,20 @@ async function baixarArquivoTelegram(fileId, extensao) {
   fs.writeFileSync(filePath, Buffer.from(response.data));
   console.log(`[DOWNLOAD] Arquivo salvo: ${filePath}`);
 
-  // 3. Faz upload para 0x0.st (CDN público sem autenticação)
-  const FormData = require('form-data');
-  const form = new FormData();
-  form.append('file', fs.createReadStream(filePath), {
-    filename: `image.${extensao}`,
-    contentType: extensao === 'mp4' ? 'video/mp4' : 'image/jpeg',
-  });
+  // 3. Faz upload para Imgur (aceito pela Meta)
+  const imgurClientId = process.env.IMGUR_CLIENT_ID;
+  if (!imgurClientId) throw new Error('IMGUR_CLIENT_ID não configurado no Railway');
 
-  const upload = await axios.post('https://0x0.st', form, {
-    headers: form.getHeaders(),
+  const imageData = fs.readFileSync(filePath).toString('base64');
+  const upload = await axios.post('https://api.imgur.com/3/upload', {
+    image: imageData,
+    type: 'base64',
+  }, {
+    headers: { Authorization: `Client-ID ${imgurClientId}` },
     timeout: 30000,
   });
 
-  const publicUrl = upload.data.trim();
+  const publicUrl = upload.data.data.link;
   console.log(`[UPLOAD] URL pública: ${publicUrl}`);
 
   // 4. Remove arquivo local após upload
