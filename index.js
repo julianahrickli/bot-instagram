@@ -1014,6 +1014,7 @@ if (PUBLIC_BASE_URL) {
 console.log('[BOT] Bot iniciado e aguardando mensagens...');
 console.log(`[BOT] Chat autorizado: ${ALLOWED_CHAT_ID}`);
 console.log(`[BOT] Instagram User ID: ${IG_USER_ID}`);
+console.log(`[BOT] Token Meta (primeiros 10 chars): ${META_TOKEN ? META_TOKEN.substring(0, 10) : 'NAO CONFIGURADO'}`);
 console.log(
   `[BOT] URL pública de mídia: ${PUBLIC_BASE_URL || 'NAO CONFIGURADA (somente fotos via URL externa)'}`
 );
