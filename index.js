@@ -149,29 +149,44 @@ function podePosta() {
 // ---------------------------------------------------------------------------
 
 /**
- * Obtém a URL pública do Telegram para um fileId.
- * O Telegram serve arquivos publicamente via CDN — sem necessidade de baixar.
- */
-async function obterUrlTelegram(fileId) {
-  const fileInfo = await bot.getFile(fileId);
-  const url = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
-  console.log(`[URL] URL Telegram obtida: ${url}`);
-  return url;
-}
-
-/**
- * Mantido por compatibilidade — agora só obtém a URL sem baixar.
+ * Baixa arquivo do Telegram e faz upload para catbox.moe (CDN público gratuito).
+ * Retorna a URL pública permanente.
  */
 async function baixarArquivoTelegram(fileId, extensao) {
-  const url = await obterUrlTelegram(fileId);
-  // Retorna a URL como "path" — será tratada como URL pública
-  return url;
+  const filePath = `${TMP_DIR}/${fileId}.${extensao}`;
+
+  // 1. Obtém a URL do arquivo no Telegram
+  const fileInfo = await bot.getFile(fileId);
+  const telegramUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
+
+  // 2. Baixa o arquivo
+  const response = await axios.get(telegramUrl, { responseType: 'arraybuffer' });
+  fs.writeFileSync(filePath, Buffer.from(response.data));
+  console.log(`[DOWNLOAD] Arquivo salvo: ${filePath}`);
+
+  // 3. Faz upload para catbox.moe
+  const FormData = require('form-data');
+  const form = new FormData();
+  form.append('reqtype', 'fileupload');
+  form.append('fileToUpload', fs.createReadStream(filePath), `media.${extensao}`);
+
+  const upload = await axios.post('https://catbox.moe/user/api.php', form, {
+    headers: form.getHeaders(),
+    timeout: 30000,
+  });
+
+  const publicUrl = upload.data.trim();
+  console.log(`[UPLOAD] URL pública: ${publicUrl}`);
+
+  // 4. Remove arquivo local após upload
+  try { fs.unlinkSync(filePath); } catch(e) {}
+
+  return publicUrl;
 }
 
 /**
  * Retorna a URL pública da mídia.
- * Se o path já for uma URL (começa com http), retorna direto.
- * Caso contrário, usa PUBLIC_BASE_URL como antes.
+ * Se já for uma URL (começa com http), retorna direto.
  */
 function gerarUrlPublica(localPath) {
   if (localPath && localPath.startsWith('http')) return localPath;
@@ -187,7 +202,7 @@ function limparTmp(mediaFiles) {
   for (const m of mediaFiles) {
     try {
       // Ignora URLs do Telegram — não há arquivo local para remover
-      if (m.filePath && !m.filePath.startsWith('http') && fs.existsSync(m.filePath)) {
+      if (m.filePath && !m.filePath.startsWith('http') && fs.existsSync(m.filePath)) { // já limpo no upload
         fs.unlinkSync(m.filePath);
         console.log(`[TMP] Removido: ${m.filePath}`);
       }
