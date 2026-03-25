@@ -48,9 +48,9 @@ for (const key of REQUIRED_ENVS) {
   }
 }
 
-const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const META_TOKEN = process.env.META_ACCESS_TOKEN;
-const IG_USER_ID = process.env.IG_USER_ID;
+const TELEGRAM_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
+const META_TOKEN = (process.env.META_ACCESS_TOKEN || '').trim();
+const IG_USER_ID = (process.env.IG_USER_ID || '').trim();
 const ALLOWED_CHAT_ID = parseInt(process.env.ALLOWED_CHAT_ID, 10);
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
 
