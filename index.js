@@ -613,6 +613,7 @@ async function enviarConfirmacao(chatId, session) {
 
   await bot.sendMessage(chatId, mensagem);
   session.step = 'waiting_confirm';
+  console.log('[CONFIRMACAO] Mensagem de confirmação enviada para chatId:', chatId);
 }
 
 // ---------------------------------------------------------------------------
@@ -829,6 +830,9 @@ bot.on('message', async (msg) => {
       // SIM — postar agora
       if (upper === 'SIM' || upper === 'S') {
         await bot.sendMessage(chatId, 'Postando agora...');
+        console.log('[POSTAGEM] Iniciando postagem para chatId:', chatId);
+        console.log('[POSTAGEM] Tipo de mídia:', session.mediaType);
+        console.log('[POSTAGEM] Arquivo:', session.mediaFiles[0]?.filePath);
 
         try {
           const permalink = await executarPostagem(session, chatId);
@@ -836,8 +840,11 @@ bot.on('message', async (msg) => {
             chatId,
             `Post publicado com sucesso!\n${permalink}`
           );
+          console.log('[POSTAGEM] Sucesso:', permalink);
         } catch (e) {
-          console.error('[POSTAGEM] Erro:', e.response?.data || e.message);
+          console.error('[POSTAGEM] Erro status:', e.response?.status);
+          console.error('[POSTAGEM] Erro data:', JSON.stringify(e.response?.data, null, 2));
+          console.error('[POSTAGEM] Erro message:', e.message);
           await bot.sendMessage(
             chatId,
             `Erro ao publicar: ${e.response?.data?.error?.message || e.message}`
